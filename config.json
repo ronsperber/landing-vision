@@ -1,0 +1,7 @@
+{
+    "video_root": "videos",
+    "game": "lunar_lander",
+    "timestamp": "20260521_151828",
+    "hidden_dims": "256_256",
+    "reward_file": "episode_rewards.csv"
+}
