@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Callable, cast
 
 import torch
@@ -18,11 +19,16 @@ def train(
     epochs: int = 500,
     device: str = "cpu",
     reward_scaler: StandardScaler | None = None,
+    patience: int = 20,
+    output_path: Path | None = None,
 ) -> tuple[list[tuple[int, float]], list[tuple[int, float]]]:
     model = model.to(device)
     optimizer: torch.optim.Optimizer = optimizer_cls(params=model.parameters(), lr=lr)
     losses = []
     val_losses = []
+    best_val_loss = float("inf")
+    epochs_without_improvement = 0
+    _output_path = output_path or Path(".")
     tqdm_bar = tqdm(range(epochs))
     for epoch in tqdm_bar:
         epoch_losses = []
@@ -79,6 +85,15 @@ def train(
                 loss = criterion(out.squeeze(), rewards)
                 epoch_val_losses.append(loss.item())
         avg_val_loss = sum(epoch_val_losses) / len(epoch_val_losses)
+        if avg_val_loss < best_val_loss:
+            best_val_loss = avg_val_loss
+            epochs_without_improvement = 0
+            torch.save(model.state_dict(), _output_path / "best_model.pt")
+        else:
+            epochs_without_improvement += 1
+        if epochs_without_improvement >= patience:
+            tqdm.write(f"Early stopping at epoch {epoch + 1}")
+            break
         model.train()
         val_losses.append((epoch + 1, avg_val_loss))
         tqdm_bar.set_postfix(

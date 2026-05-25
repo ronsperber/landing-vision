@@ -48,6 +48,7 @@ hist, val_hist = train(
     epochs=args.epochs,
     reward_scaler=scaler,
     device=device,
+    output_path=OUTPUT_PATH,
 )
 
 
