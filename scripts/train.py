@@ -21,7 +21,7 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 DATA_PATH = "data/preprocessed.h5"
 OUTPUT_PATH = Path("output") / timestamp
 OUTPUT_PATH.mkdir(exist_ok=True, parents=True)
-
+device = "cuda" if torch.cuda.is_available() else "cpu"
 dataset = LunarLanderDataset(DATA_PATH)
 # train/val/test split
 n = len(dataset)
@@ -45,6 +45,7 @@ hist, val_hist = train(
     criterion=nn.MSELoss(),
     epochs=args.epochs,
     reward_scaler=scaler,
+    device=device,
 )
 
 
