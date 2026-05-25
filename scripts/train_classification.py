@@ -13,7 +13,7 @@ from network.training import train
 
 parser = ArgumentParser()
 parser.add_argument("-e", "--epochs", type=int, default=500)
-parser.add_argument("-t", "--threshold", type=float, default=150.0)
+parser.add_argument("-t", "--threshold", type=float, default=200.0)
 args = parser.parse_args()
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 DATA_PATH = "data/preprocessed.h5"
