@@ -2,15 +2,14 @@ from pathlib import Path
 from typing import Callable, cast
 
 import torch
+import torch.nn as nn
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from network.model import LunarLanderConv
-
 
 def train(
-    model: LunarLanderConv,
+    model: nn.Module,
     train_loader: DataLoader,
     val_loader: DataLoader,
     criterion: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
