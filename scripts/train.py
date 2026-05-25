@@ -30,11 +30,13 @@ n_val = int(0.15 * n)
 n_test = n - n_train - n_val
 train_ds, val_ds, test_ds = random_split(dataset, [n_train, n_val, n_test])
 # get train rewards
+print("Getting training rewards for scaling.")
 train_rewards = np.array([dataset[i][2].item() for i in train_ds.indices])
 # create scaler for the rewards and save for inference
 scaler = StandardScaler()
 scaler.fit(train_rewards.reshape(-1, 1))
 joblib.dump(scaler, OUTPUT_PATH / "reward_scaler.pkl")
+print("Scaler fit and saved.")
 train_loader = DataLoader(train_ds, batch_size=16, shuffle=True)
 val_loader = DataLoader(val_ds, batch_size=16, shuffle=False)
 model = LunarLanderConv()
