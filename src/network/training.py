@@ -17,7 +17,7 @@ def train(
     lr: float = 1e-4,
     epochs: int = 500,
     device: str = "cpu",
-    reward_scaler : StandardScaler | None,
+    reward_scaler: StandardScaler | None = None,
 ) -> tuple[list[tuple[int, float]], list[tuple[int, float]]]:
     model = model.to(device)
     optimizer: torch.optim.Optimizer = optimizer_cls(params=model.parameters(), lr=lr)
@@ -36,10 +36,16 @@ def train(
             length_batch = length_batch.to(device)
             rewards_batch = rewards_batch.to(device)
             if reward_scaler is not None:
-                rewards_batch = torch.tensor(
-                    reward_scaler.transform(rewards_batch.cpu().numpy().reshape(-1, 1)),
-                    dtype=torch.float32
-                    ).squeeze().to(device)
+                rewards_batch = (
+                    torch.tensor(
+                        reward_scaler.transform(
+                            rewards_batch.cpu().numpy().reshape(-1, 1)
+                        ),
+                        dtype=torch.float32,
+                    )
+                    .squeeze()
+                    .to(device)
+                )
             out = cast(torch.Tensor, model(frames_batch, length_batch))
             loss = criterion(out.squeeze(), rewards_batch)
             epoch_losses.append(loss.item())
@@ -58,6 +64,17 @@ def train(
                 frames = frames.to(device)
                 lengths = lengths.to(device)
                 rewards = rewards.to(device)
+                if reward_scaler is not None:
+                    rewards = (
+                        torch.tensor(
+                            reward_scaler.transform(
+                                rewards.cpu().numpy().reshape(-1, 1)
+                            ),
+                            dtype=torch.float32,
+                        )
+                        .squeeze()
+                        .to(device)
+                    )
                 out = cast(torch.Tensor, model(frames, lengths))
                 loss = criterion(out.squeeze(), rewards)
                 epoch_val_losses.append(loss.item())
