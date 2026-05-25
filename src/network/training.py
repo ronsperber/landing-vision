@@ -19,6 +19,7 @@ def train(
     epochs: int = 500,
     device: str = "cpu",
     reward_scaler: StandardScaler | None = None,
+    classification_threshold: float | None = None,
     patience: int = 20,
     output_path: Path | None = None,
 ) -> tuple[list[tuple[int, float]], list[tuple[int, float]]]:
@@ -41,7 +42,9 @@ def train(
             frames_batch = frames_batch.to(device)
             length_batch = length_batch.to(device)
             rewards_batch = rewards_batch.to(device)
-            if reward_scaler is not None:
+            if classification_threshold is not None:
+                rewards_batch = (rewards_batch >= classification_threshold).float()
+            elif reward_scaler is not None:
                 rewards_batch = (
                     torch.tensor(
                         reward_scaler.transform(
@@ -70,7 +73,9 @@ def train(
                 frames = frames.to(device)
                 lengths = lengths.to(device)
                 rewards = rewards.to(device)
-                if reward_scaler is not None:
+                if classification_threshold is not None:
+                    rewards = (rewards >= classification_threshold).float()
+                elif reward_scaler is not None:
                     rewards = (
                         torch.tensor(
                             reward_scaler.transform(
@@ -85,6 +90,7 @@ def train(
                 loss = criterion(out.squeeze(), rewards)
                 epoch_val_losses.append(loss.item())
         avg_val_loss = sum(epoch_val_losses) / len(epoch_val_losses)
+        val_losses.append((epoch + 1, avg_val_loss))
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
             epochs_without_improvement = 0
@@ -95,7 +101,6 @@ def train(
             tqdm.write(f"Early stopping at epoch {epoch + 1}")
             break
         model.train()
-        val_losses.append((epoch + 1, avg_val_loss))
         tqdm_bar.set_postfix(
             {
                 "train_loss": f"{epoch_loss:.4f}",
