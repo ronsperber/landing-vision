@@ -37,8 +37,8 @@ scaler = StandardScaler()
 scaler.fit(train_rewards.reshape(-1, 1))
 joblib.dump(scaler, OUTPUT_PATH / "reward_scaler.pkl")
 print("Scaler fit and saved.")
-train_loader = DataLoader(train_ds, batch_size=16, shuffle=True)
-val_loader = DataLoader(val_ds, batch_size=16, shuffle=False)
+train_loader = DataLoader(train_ds, batch_size=2, shuffle=True)
+val_loader = DataLoader(val_ds, batch_size=2, shuffle=False)
 model = LunarLanderConv()
 hist, val_hist = train(
     model=model,
