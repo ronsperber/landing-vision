@@ -11,9 +11,11 @@ class LunarLanderConv(nn.Module):
         embed_dim: int = 128,
         hidden_size: int = 128,
         use_pooling: bool = True,
+        dropout_rate: float = 0.0,
     ):
         super().__init__()
         self.use_pooling = use_pooling
+        self.dropout = nn.Dropout(dropout_rate)
         self.conv1 = nn.Conv2d(
             in_channels=3, out_channels=conv_channels[0], kernel_size=3, padding=1
         )
@@ -32,6 +34,7 @@ class LunarLanderConv(nn.Module):
             hidden_size=hidden_size,
             num_layers=2,  # stacked LSTMs
             batch_first=True,
+            dropout=dropout_rate,
         )
         self.output_layer = nn.Linear(hidden_size, 1)
         self.pool = nn.MaxPool2d(2, 2)
@@ -53,6 +56,7 @@ class LunarLanderConv(nn.Module):
             x = self.pool(x)
         x = x.reshape(B * N, -1)  # flatten
         x = F.relu(self.linear_embed(x))
+        x = self.dropout(x)
         x = x.reshape(B, N, -1)
         packed = pack_padded_sequence(
             x, lengths.cpu(), batch_first=True, enforce_sorted=False

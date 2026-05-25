@@ -16,10 +16,11 @@ from network.training import train
 
 parser = ArgumentParser()
 parser.add_argument("-e", "--epochs", type=int, default=500)
+parser.add_argument("-d", "--dropout", type=float, default=0.0)
 args = parser.parse_args()
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 DATA_PATH = "data/preprocessed.h5"
-OUTPUT_PATH = Path("output") / timestamp
+OUTPUT_PATH = Path("output") / f"dropout={args.dropout}" / timestamp
 OUTPUT_PATH.mkdir(exist_ok=True, parents=True)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 dataset = LunarLanderDataset(DATA_PATH)
@@ -39,7 +40,7 @@ joblib.dump(scaler, OUTPUT_PATH / "reward_scaler.pkl")
 print("Scaler fit and saved.")
 train_loader = DataLoader(train_ds, batch_size=2, shuffle=True)
 val_loader = DataLoader(val_ds, batch_size=2, shuffle=False)
-model = LunarLanderConv()
+model = LunarLanderConv(dropout_rate=args.dropout)
 hist, val_hist = train(
     model=model,
     train_loader=train_loader,

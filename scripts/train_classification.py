@@ -13,11 +13,13 @@ from network.training import train
 
 parser = ArgumentParser()
 parser.add_argument("-e", "--epochs", type=int, default=500)
+parser.add_argument("-d", "--dropout", type=float, default=0.0)
 parser.add_argument("-t", "--threshold", type=float, default=200.0)
 args = parser.parse_args()
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 DATA_PATH = "data/preprocessed.h5"
-OUTPUT_PATH = Path("output") / f"threshold_{args.threshold}" / timestamp
+dir_name = f"threshold_{args.threshold}_dropout{args.dropout}"
+OUTPUT_PATH = Path("output") / dir_name / timestamp
 OUTPUT_PATH.mkdir(exist_ok=True, parents=True)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 dataset = LunarLanderDataset(DATA_PATH)
@@ -29,7 +31,7 @@ n_test = n - n_train - n_val
 train_ds, val_ds, test_ds = random_split(dataset, [n_train, n_val, n_test])
 train_loader = DataLoader(train_ds, batch_size=2, shuffle=True)
 val_loader = DataLoader(val_ds, batch_size=2, shuffle=False)
-model = LunarLanderConv()
+model = LunarLanderConv(dropout_rate=args.dropout)
 hist, val_hist = train(
     model=model,
     train_loader=train_loader,

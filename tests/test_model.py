@@ -63,3 +63,47 @@ def test_gradients_flow(model):
     out = model(x, lengths)
     out.sum().backward()
     assert x.grad is not None
+
+
+# --- dropout ---
+
+def test_dropout_zero_output_shape():
+    model = LunarLanderConv(dropout_rate=0.0)
+    x, lengths = _make_input(B=2, N=5)
+    assert model(x, lengths).shape == (2, 1)
+
+
+def test_dropout_nonzero_output_shape():
+    model = LunarLanderConv(dropout_rate=0.5)
+    x, lengths = _make_input(B=2, N=5)
+    assert model(x, lengths).shape == (2, 1)
+
+
+def test_dropout_train_mode_is_stochastic():
+    model = LunarLanderConv(dropout_rate=0.5)
+    model.train()
+    x, lengths = _make_input(B=2, N=5)
+    out1 = model(x, lengths)
+    out2 = model(x, lengths)
+    assert not torch.allclose(out1, out2)
+
+
+def test_dropout_eval_mode_is_deterministic():
+    model = LunarLanderConv(dropout_rate=0.5)
+    model.eval()
+    x, lengths = _make_input(B=2, N=5)
+    with torch.no_grad():
+        out1 = model(x, lengths)
+        out2 = model(x, lengths)
+    assert torch.allclose(out1, out2)
+
+
+def test_dropout_zero_same_in_train_and_eval():
+    """p=0 (default) should be deterministic in train mode too."""
+    model = LunarLanderConv(dropout_rate=0.0)
+    model.train()
+    x, lengths = _make_input(B=2, N=5)
+    with torch.no_grad():
+        out1 = model(x, lengths)
+        out2 = model(x, lengths)
+    assert torch.allclose(out1, out2)
