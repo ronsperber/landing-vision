@@ -1,6 +1,7 @@
 from typing import Callable, cast
 
 import torch
+from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -16,6 +17,7 @@ def train(
     lr: float = 1e-4,
     epochs: int = 500,
     device: str = "cpu",
+    reward_scaler : StandardScaler | None,
 ) -> tuple[list[tuple[int, float]], list[tuple[int, float]]]:
     model = model.to(device)
     optimizer: torch.optim.Optimizer = optimizer_cls(params=model.parameters(), lr=lr)
@@ -24,7 +26,7 @@ def train(
     tqdm_bar = tqdm(range(epochs))
     for epoch in tqdm_bar:
         epoch_losses = []
-        for batch in train_loader:
+        for batch in tqdm(train_loader, desc="train", leave=False):
             optimizer.zero_grad()
             frames_batch: torch.Tensor
             length_batch: torch.Tensor
@@ -33,6 +35,11 @@ def train(
             frames_batch = frames_batch.to(device)
             length_batch = length_batch.to(device)
             rewards_batch = rewards_batch.to(device)
+            if reward_scaler is not None:
+                rewards_batch = torch.tensor(
+                    reward_scaler.transform(rewards_batch.cpu().numpy().reshape(-1, 1)),
+                    dtype=torch.float32
+                    ).squeeze().to(device)
             out = cast(torch.Tensor, model(frames_batch, length_batch))
             loss = criterion(out.squeeze(), rewards_batch)
             epoch_losses.append(loss.item())
@@ -43,7 +50,7 @@ def train(
         model.eval()
         with torch.no_grad():
             epoch_val_losses = []
-            for batch in val_loader:
+            for batch in tqdm(val_loader, desc="val", leave=False):
                 frames: torch.Tensor
                 lengths: torch.Tensor
                 rewards: torch.Tensor
