@@ -1,3 +1,8 @@
+"""
+module with network used to make
+predictions on lunar lander videos
+"""
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -5,6 +10,10 @@ from torch.nn.utils.rnn import pack_padded_sequence
 
 
 class LunarLanderConv(nn.Module):
+    """
+    class with network used to train on videos
+    """
+
     def __init__(
         self,
         conv_channels: tuple[int, int] = (32, 64),
@@ -13,6 +22,20 @@ class LunarLanderConv(nn.Module):
         use_pooling: bool = True,
         dropout_rate: float = 0.0,
     ):
+        """
+        Parameters
+        ----------
+        conv_channels: tuple[int, int]
+            number of channels to use in the pair of conv layers
+        embed_dim: int
+            dimension of linear layer where conv output is embedded
+        hidden_size : int
+            hidden_size for LSTM layer
+        use_pooling : bool
+            whether or not to use max pooling between conv layers
+        dropout_rate: float
+            rate to use in dropout layer and dropout between LSTM layers
+        """
         super().__init__()
         self.use_pooling = use_pooling
         self.dropout = nn.Dropout(dropout_rate)
@@ -44,8 +67,18 @@ class LunarLanderConv(nn.Module):
         x: torch.Tensor,
         lengths: torch.Tensor,
     ) -> torch.Tensor:
+        """
+        Foward method for network
+        x :torch.Tensor
+            input representing a batch of videos
+        lengths: torch.Tensor
+            length of each individual video used for padding
+        """
+        # extract batch, number of frames, channels, height, width
         B, N, C, H, W = x.shape
+        # reshape to have an B*N sized batch of images
         x = x.reshape(B * N, C, H, W)
+        # pass images through convolution and optional pooling
         x = self.conv1(x)
         x = F.relu(x)
         if self.use_pooling:
@@ -57,6 +90,7 @@ class LunarLanderConv(nn.Module):
         x = x.reshape(B * N, -1)  # flatten
         x = F.relu(self.linear_embed(x))
         x = self.dropout(x)
+        # reshape to batch, length, embedding
         x = x.reshape(B, N, -1)
         packed = pack_padded_sequence(
             x, lengths.cpu(), batch_first=True, enforce_sorted=False
