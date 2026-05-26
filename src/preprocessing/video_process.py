@@ -12,12 +12,12 @@ from torchvision import transforms
 from torchvision.transforms import Compose
 
 
-def get_filename_df(dir: Path, suffix: str = "mp4") -> pd.DataFrame:
+def get_filename_df(video_dir: Path, suffix: str = "mp4") -> pd.DataFrame:
     """
     get dataframe of episode and filename for each episode
     Parameters
     ----------
-    dir : Path
+    video_dir : Path
         directory with videos in it
     suffix : str
         suffix of files being looked for
@@ -26,9 +26,11 @@ def get_filename_df(dir: Path, suffix: str = "mp4") -> pd.DataFrame:
     pd.DataFrame
         dataframe of episodes and filename
     """
-    video_paths = list(dir.glob(f"*.{suffix}"))
+    video_paths = list(video_dir.glob(f"*.{suffix}"))
     video_files = [Path(x).name for x in video_paths]
-    video_episodes = [int(f.split("-")[-1].replace(".mp4", "")) for f in video_files]
+    video_episodes = [
+        int(f.split("-")[-1].replace(f".{suffix}", "")) for f in video_files
+    ]
     return pd.DataFrame({"Episode": video_episodes, "filename": video_files})
 
 

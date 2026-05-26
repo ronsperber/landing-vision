@@ -68,11 +68,17 @@ class LunarLanderConv(nn.Module):
         lengths: torch.Tensor,
     ) -> torch.Tensor:
         """
-        Foward method for network
-        x :torch.Tensor
-            input representing a batch of videos
-        lengths: torch.Tensor
-            length of each individual video used for padding
+        Forward pass for the network.
+        Parameters
+        ----------
+        x : torch.Tensor
+            batch of videos with shape (B, N, C, H, W)
+        lengths : torch.Tensor
+            actual length of each video in the batch, used for packed padding
+        Returns
+        -------
+        torch.Tensor
+            predicted scalar per sample, shape (B, 1)
         """
         # extract batch, number of frames, channels, height, width
         B, N, C, H, W = x.shape
