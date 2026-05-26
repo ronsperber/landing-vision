@@ -33,6 +33,7 @@ n_videos = len(joint_df)
 max_len = 500
 
 with h5py.File(DATA_PATH / "preprocessed.h5", "w") as f:
+    # create datasets for the frames, lengths, and rewards
     frames_ds = f.create_dataset(
         "frames",
         shape=(n_videos, max_len, 3, 84, 84),
@@ -42,6 +43,8 @@ with h5py.File(DATA_PATH / "preprocessed.h5", "w") as f:
     rewards_ds = f.create_dataset("rewards", shape=(n_videos,), dtype="float32")
 
     for i, row in enumerate(tqdm(joint_df.itertuples(), total=n_videos)):
+        # get the video, pad, and save everything needed to the h5
+        # file
         video_path = video_process.get_video_path(
             video_dir=video_dir, df=joint_df, idx=i
         )
