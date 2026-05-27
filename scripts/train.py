@@ -22,7 +22,10 @@ parser.add_argument("--lstm_dropout", type=float, default=0.4)
 args = parser.parse_args()
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 DATA_PATH = "data/preprocessed.h5"
-OUTPUT_PATH = Path("output") / f"dropout={args.dropout}" / timestamp
+dir_name = (
+    f"cnn_{args.cnn_dropout}_embed_{args.linear_dropout}_lstm_{args.lstm_dropout}"
+)
+OUTPUT_PATH = Path("output") / dir_name / timestamp
 OUTPUT_PATH.mkdir(exist_ok=True, parents=True)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 dataset = LunarLanderDataset(DATA_PATH)
