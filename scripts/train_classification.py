@@ -13,12 +13,17 @@ from network.training import train
 
 parser = ArgumentParser()
 parser.add_argument("-e", "--epochs", type=int, default=500)
-parser.add_argument("-d", "--dropout", type=float, default=0.0)
+parser.add_argument("--cnn_dropout", type=float, default=0.1)
+parser.add_argument("--linear_dropout", type=float, default=0.3)
+parser.add_argument("--lstm_dropout", type=float, default=0.4)
 parser.add_argument("-t", "--threshold", type=float, default=200.0)
 args = parser.parse_args()
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 DATA_PATH = "data/preprocessed.h5"
-dir_name = f"threshold_{args.threshold}_dropout{args.dropout}"
+dir_name = (
+    f"threshold_{args.threshold}_cnn_{args.cnn_dropout}_"
+    f"embed_{args.linear_dropout}_lstm_{args.lstm_dropout}"
+)
 OUTPUT_PATH = Path("output") / dir_name / timestamp
 OUTPUT_PATH.mkdir(exist_ok=True, parents=True)
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -31,7 +36,11 @@ n_test = n - n_train - n_val
 train_ds, val_ds, test_ds = random_split(dataset, [n_train, n_val, n_test])
 train_loader = DataLoader(train_ds, batch_size=2, shuffle=True)
 val_loader = DataLoader(val_ds, batch_size=2, shuffle=False)
-model = LunarLanderConv(dropout_rate=args.dropout)
+model = LunarLanderConv(
+    linear_dropout=args.linear_dropout,
+    lstm_dropout=args.lstm_dropout,
+    cnn_dropout=args.cnn_dropout,
+)
 hist, val_hist = train(
     model=model,
     train_loader=train_loader,

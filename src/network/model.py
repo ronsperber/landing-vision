@@ -35,8 +35,12 @@ class LunarLanderConv(nn.Module):
             hidden_size for LSTM layer
         use_pooling : bool
             whether or not to use max pooling between conv layers
-        dropout_rate: float
-            rate to use in dropout layer and dropout between LSTM layers
+        cnn_dropout : float
+            Dropout2d rate applied to conv feature maps after each pool block
+        linear_dropout : float
+            dropout rate applied to the sequence embeddings after layer norm
+        lstm_dropout : float
+            dropout rate applied between the two LSTM layers
         """
         super().__init__()
         self.use_pooling = use_pooling
