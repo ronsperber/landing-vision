@@ -16,11 +16,16 @@ from network.training import train
 
 parser = ArgumentParser()
 parser.add_argument("-e", "--epochs", type=int, default=500)
-parser.add_argument("-d", "--dropout", type=float, default=0.0)
+parser.add_argument("--cnn_dropout", type=float, default=0.1)
+parser.add_argument("--linear_dropout", type=float, default=0.3)
+parser.add_argument("--lstm_dropout", type=float, default=0.4)
 args = parser.parse_args()
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 DATA_PATH = "data/preprocessed.h5"
-OUTPUT_PATH = Path("output") / f"dropout={args.dropout}" / timestamp
+dir_name = (
+    f"cnn_{args.cnn_dropout}_embed_{args.linear_dropout}_lstm_{args.lstm_dropout}"
+)
+OUTPUT_PATH = Path("output") / dir_name / timestamp
 OUTPUT_PATH.mkdir(exist_ok=True, parents=True)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 dataset = LunarLanderDataset(DATA_PATH)
@@ -40,7 +45,11 @@ joblib.dump(scaler, OUTPUT_PATH / "reward_scaler.pkl")
 print("Scaler fit and saved.")
 train_loader = DataLoader(train_ds, batch_size=2, shuffle=True)
 val_loader = DataLoader(val_ds, batch_size=2, shuffle=False)
-model = LunarLanderConv(dropout_rate=args.dropout)
+model = LunarLanderConv(
+    cnn_dropout=args.cnn_dropout,
+    linear_dropout=args.linear_dropout,
+    lstm_dropout=args.lstm_dropout,
+)
 hist, val_hist = train(
     model=model,
     train_loader=train_loader,

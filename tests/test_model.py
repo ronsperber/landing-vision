@@ -67,20 +67,20 @@ def test_gradients_flow(model):
 
 # --- dropout ---
 
-def test_dropout_zero_output_shape():
-    model = LunarLanderConv(dropout_rate=0.0)
+def test_all_dropouts_nonzero_output_shape():
+    model = LunarLanderConv(cnn_dropout=0.5, linear_dropout=0.5, lstm_dropout=0.5)
     x, lengths = _make_input(B=2, N=5)
     assert model(x, lengths).shape == (2, 1)
 
 
-def test_dropout_nonzero_output_shape():
-    model = LunarLanderConv(dropout_rate=0.5)
+def test_all_dropouts_zero_output_shape():
+    model = LunarLanderConv(cnn_dropout=0.0, linear_dropout=0.0, lstm_dropout=0.0)
     x, lengths = _make_input(B=2, N=5)
     assert model(x, lengths).shape == (2, 1)
 
 
-def test_dropout_train_mode_is_stochastic():
-    model = LunarLanderConv(dropout_rate=0.5)
+def test_cnn_dropout_stochastic_in_train():
+    model = LunarLanderConv(cnn_dropout=0.5, linear_dropout=0.0, lstm_dropout=0.0)
     model.train()
     x, lengths = _make_input(B=2, N=5)
     out1 = model(x, lengths)
@@ -88,8 +88,26 @@ def test_dropout_train_mode_is_stochastic():
     assert not torch.allclose(out1, out2)
 
 
-def test_dropout_eval_mode_is_deterministic():
-    model = LunarLanderConv(dropout_rate=0.5)
+def test_linear_dropout_stochastic_in_train():
+    model = LunarLanderConv(cnn_dropout=0.0, linear_dropout=0.5, lstm_dropout=0.0)
+    model.train()
+    x, lengths = _make_input(B=2, N=5)
+    out1 = model(x, lengths)
+    out2 = model(x, lengths)
+    assert not torch.allclose(out1, out2)
+
+
+def test_lstm_dropout_stochastic_in_train():
+    model = LunarLanderConv(cnn_dropout=0.0, linear_dropout=0.0, lstm_dropout=0.5)
+    model.train()
+    x, lengths = _make_input(B=2, N=5)
+    out1 = model(x, lengths)
+    out2 = model(x, lengths)
+    assert not torch.allclose(out1, out2)
+
+
+def test_eval_mode_is_deterministic():
+    model = LunarLanderConv(cnn_dropout=0.5, linear_dropout=0.5, lstm_dropout=0.5)
     model.eval()
     x, lengths = _make_input(B=2, N=5)
     with torch.no_grad():
@@ -98,9 +116,8 @@ def test_dropout_eval_mode_is_deterministic():
     assert torch.allclose(out1, out2)
 
 
-def test_dropout_zero_same_in_train_and_eval():
-    """p=0 (default) should be deterministic in train mode too."""
-    model = LunarLanderConv(dropout_rate=0.0)
+def test_all_dropouts_zero_deterministic_in_train():
+    model = LunarLanderConv(cnn_dropout=0.0, linear_dropout=0.0, lstm_dropout=0.0)
     model.train()
     x, lengths = _make_input(B=2, N=5)
     with torch.no_grad():
