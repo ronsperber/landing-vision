@@ -20,7 +20,9 @@ class LunarLanderConv(nn.Module):
         embed_dim: int = 128,
         hidden_size: int = 128,
         use_pooling: bool = True,
-        dropout_rate: float = 0.0,
+        cnn_dropout: float = 0.1,
+        linear_dropout: float = 0.3,
+        lstm_dropout: float = 0.4,
     ):
         """
         Parameters
@@ -38,7 +40,9 @@ class LunarLanderConv(nn.Module):
         """
         super().__init__()
         self.use_pooling = use_pooling
-        self.dropout = nn.Dropout(dropout_rate)
+        self.spatial_dropout = nn.Dropout2d(cnn_dropout)
+        self.embed_dropout = nn.Dropout(linear_dropout)
+        self.layer_norm = nn.LayerNorm(embed_dim)
         self.conv1 = nn.Conv2d(
             in_channels=3, out_channels=conv_channels[0], kernel_size=3, padding=1
         )
@@ -57,7 +61,7 @@ class LunarLanderConv(nn.Module):
             hidden_size=hidden_size,
             num_layers=2,  # stacked LSTMs
             batch_first=True,
-            dropout=dropout_rate,
+            dropout=lstm_dropout,
         )
         self.output_layer = nn.Linear(hidden_size, 1)
         self.pool = nn.MaxPool2d(2, 2)
@@ -89,15 +93,18 @@ class LunarLanderConv(nn.Module):
         x = F.relu(x)
         if self.use_pooling:
             x = self.pool(x)
+        x = self.spatial_dropout(x)
         x = self.conv2(x)
         x = F.relu(x)
         if self.use_pooling:
             x = self.pool(x)
+        x = self.spatial_dropout(x)
         x = x.reshape(B * N, -1)  # flatten
         x = F.relu(self.linear_embed(x))
-        x = self.dropout(x)
         # reshape to batch, length, embedding
         x = x.reshape(B, N, -1)
+        x = self.layer_norm(x)
+        x = self.embed_dropout(x)
         packed = pack_padded_sequence(
             x, lengths.cpu(), batch_first=True, enforce_sorted=False
         )
